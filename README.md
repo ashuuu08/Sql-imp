@@ -2114,3 +2114,913 @@ WHERE rnk = @N;
 ---
 
 ### Q38. G
+# 🏋️ SQL Practice Questions (35 Problems with Solutions)
+
+> Hands-on SQL practice problems from Basic to Advanced level. Try solving yourself first, then check the solution!
+
+---
+
+## 📦 Sample Database Schema
+
+> All questions below use these tables. Set them up first!
+
+```sql
+-- DEPARTMENTS table
+CREATE TABLE departments (
+    dept_id   INT PRIMARY KEY,
+    dept_name VARCHAR(50),
+    location  VARCHAR(50)
+);
+
+-- EMPLOYEES table
+CREATE TABLE employees (
+    emp_id     INT PRIMARY KEY,
+    name       VARCHAR(100),
+    dept_id    INT,
+    salary     DECIMAL(10,2),
+    manager_id INT,
+    join_date  DATE,
+    gender     VARCHAR(10),
+    FOREIGN KEY (dept_id) REFERENCES departments(dept_id)
+);
+
+-- PRODUCTS table
+CREATE TABLE products (
+    product_id   INT PRIMARY KEY,
+    product_name VARCHAR(100),
+    category     VARCHAR(50),
+    price        DECIMAL(10,2),
+    stock        INT
+);
+
+-- ORDERS table
+CREATE TABLE orders (
+    order_id   INT PRIMARY KEY,
+    emp_id     INT,
+    product_id INT,
+    quantity   INT,
+    order_date DATE,
+    status     VARCHAR(20),
+    FOREIGN KEY (emp_id)     REFERENCES employees(emp_id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+
+-- SALES table
+CREATE TABLE sales (
+    sale_id     INT PRIMARY KEY,
+    emp_id      INT,
+    sale_amount DECIMAL(10,2),
+    sale_date   DATE,
+    region      VARCHAR(50)
+);
+```
+
+---
+
+```sql
+-- Sample Data
+
+INSERT INTO departments VALUES
+(1, 'Engineering',  'New York'),
+(2, 'Sales',        'Chicago'),
+(3, 'HR',           'New York'),
+(4, 'Marketing',    'Los Angeles'),
+(5, 'Finance',      'Chicago');
+
+INSERT INTO employees VALUES
+(1,  'Alice',   1, 95000, NULL, '2019-03-15', 'Female'),
+(2,  'Bob',     1, 85000, 1,    '2020-06-01', 'Male'),
+(3,  'Charlie', 2, 60000, NULL, '2018-11-20', 'Male'),
+(4,  'Diana',   2, 72000, 3,    '2021-01-10', 'Female'),
+(5,  'Ethan',   3, 55000, 1,    '2022-07-05', 'Male'),
+(6,  'Fiona',   3, 58000, 1,    '2020-09-18', 'Female'),
+(7,  'George',  4, 67000, NULL, '2017-04-22', 'Male'),
+(8,  'Helen',   4, 71000, 7,    '2023-02-14', 'Female'),
+(9,  'Ivan',    5, 90000, 1,    '2019-08-30', 'Male'),
+(10, 'Julia',   5, 88000, 9,    '2021-05-11', 'Female'),
+(11, 'Kevin',   1, 95000, 1,    '2020-03-25', 'Male'),
+(12, 'Laura',   2, 60000, 3,    '2022-12-01', 'Female');
+
+INSERT INTO products VALUES
+(1, 'Laptop',   'Electronics', 1200.00, 50),
+(2, 'Phone',    'Electronics',  800.00, 100),
+(3, 'Desk',     'Furniture',    300.00, 30),
+(4, 'Chair',    'Furniture',    150.00, 80),
+(5, 'Monitor',  'Electronics',  400.00, 60),
+(6, 'Keyboard', 'Electronics',   80.00, 200),
+(7, 'Notebook', 'Stationery',    10.00, 500),
+(8, 'Pen',      'Stationery',     2.00, 1000);
+
+INSERT INTO orders VALUES
+(1,  3, 1, 2, '2024-01-10', 'Completed'),
+(2,  5, 2, 1, '2024-01-15', 'Completed'),
+(3,  1, 3, 5, '2024-02-01', 'Pending'),
+(4,  7, 4, 3, '2024-02-10', 'Completed'),
+(5,  2, 5, 1, '2024-02-20', 'Cancelled'),
+(6,  4, 6, 4, '2024-03-05', 'Completed'),
+(7,  6, 1, 1, '2024-03-12', 'Completed'),
+(8,  9, 2, 2, '2024-03-18', 'Pending'),
+(9,  3, 7, 10,'2024-04-02', 'Completed'),
+(10, 1, 8, 20,'2024-04-15', 'Completed');
+
+INSERT INTO sales VALUES
+(1,  3,  15000, '2024-01-05', 'North'),
+(2,  4,  22000, '2024-01-20', 'South'),
+(3,  3,  18000, '2024-02-10', 'North'),
+(4,  4,  30000, '2024-02-28', 'East'),
+(5,  12, 12000, '2024-03-05', 'North'),
+(6,  3,  25000, '2024-03-15', 'West'),
+(7,  4,  19000, '2024-04-01', 'South'),
+(8,  12, 27000, '2024-04-10', 'East'),
+(9,  3,  31000, '2024-05-02', 'West'),
+(10, 4,  16000, '2024-05-20', 'North');
+```
+
+---
+
+## 🟢 EASY (Q1 – Q12)
+
+---
+
+### Q1. List all employees with their department name.
+
+<details>
+<summary>💡 Hint</summary>
+Use JOIN between employees and departments.
+</details>
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT e.emp_id, e.name, d.dept_name, e.salary
+FROM employees e
+JOIN departments d ON e.dept_id = d.dept_id
+ORDER BY d.dept_name;
+```
+</details>
+
+---
+
+### Q2. Find all employees whose salary is greater than 80,000.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT name, salary, dept_id
+FROM employees
+WHERE salary > 80000
+ORDER BY salary DESC;
+```
+</details>
+
+---
+
+### Q3. Count the number of employees in each department.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT d.dept_name, COUNT(e.emp_id) AS total_employees
+FROM departments d
+LEFT JOIN employees e ON d.dept_id = e.dept_id
+GROUP BY d.dept_name
+ORDER BY total_employees DESC;
+```
+</details>
+
+---
+
+### Q4. Find the highest and lowest salary in the company.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT
+    MAX(salary) AS highest_salary,
+    MIN(salary) AS lowest_salary,
+    AVG(salary) AS avg_salary
+FROM employees;
+```
+</details>
+
+---
+
+### Q5. List all products in the 'Electronics' category with price less than 500.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT product_name, price, stock
+FROM products
+WHERE category = 'Electronics' AND price < 500
+ORDER BY price;
+```
+</details>
+
+---
+
+### Q6. Find employees who do NOT have a manager (top-level managers).
+
+<details>
+<summary>💡 Hint</summary>
+Check for NULL in manager_id.
+</details>
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT emp_id, name, dept_id, salary
+FROM employees
+WHERE manager_id IS NULL;
+```
+</details>
+
+---
+
+### Q7. List all orders that are 'Completed', sorted by order_date descending.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT o.order_id, e.name AS employee, p.product_name, o.quantity, o.order_date
+FROM orders o
+JOIN employees e ON o.emp_id = e.emp_id
+JOIN products p ON o.product_id = p.product_id
+WHERE o.status = 'Completed'
+ORDER BY o.order_date DESC;
+```
+</details>
+
+---
+
+### Q8. Find the total number of orders per status.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT status, COUNT(*) AS total_orders
+FROM orders
+GROUP BY status
+ORDER BY total_orders DESC;
+```
+</details>
+
+---
+
+### Q9. Get all employees who joined after January 1, 2021.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT name, join_date, dept_id
+FROM employees
+WHERE join_date > '2021-01-01'
+ORDER BY join_date;
+```
+</details>
+
+---
+
+### Q10. Find the average salary per department.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT d.dept_name, ROUND(AVG(e.salary), 2) AS avg_salary
+FROM employees e
+JOIN departments d ON e.dept_id = d.dept_id
+GROUP BY d.dept_name
+ORDER BY avg_salary DESC;
+```
+</details>
+
+---
+
+### Q11. Find all employees whose name starts with 'A' or ends with 'a'.
+
+<details>
+<summary>💡 Hint</summary>
+Use LIKE operator.
+</details>
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT name, salary
+FROM employees
+WHERE name LIKE 'A%' OR name LIKE '%a'
+ORDER BY name;
+```
+</details>
+
+---
+
+### Q12. Calculate the total order value (quantity × price) for each order.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT
+    o.order_id,
+    e.name AS employee,
+    p.product_name,
+    o.quantity,
+    p.price,
+    (o.quantity * p.price) AS total_value
+FROM orders o
+JOIN employees e ON o.emp_id = e.emp_id
+JOIN products p ON o.product_id = p.product_id
+ORDER BY total_value DESC;
+```
+</details>
+
+---
+
+## 🟡 MEDIUM (Q13 – Q26)
+
+---
+
+### Q13. Find departments where average salary is greater than 70,000.
+
+<details>
+<summary>💡 Hint</summary>
+Use GROUP BY + HAVING.
+</details>
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT d.dept_name, ROUND(AVG(e.salary), 2) AS avg_salary
+FROM employees e
+JOIN departments d ON e.dept_id = d.dept_id
+GROUP BY d.dept_name
+HAVING AVG(e.salary) > 70000
+ORDER BY avg_salary DESC;
+```
+</details>
+
+---
+
+### Q14. Find the second highest salary in the company.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+-- Method 1: Subquery
+SELECT MAX(salary) AS second_highest
+FROM employees
+WHERE salary < (SELECT MAX(salary) FROM employees);
+
+-- Method 2: DENSE_RANK
+SELECT salary FROM (
+    SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
+    FROM employees
+) t
+WHERE rnk = 2;
+```
+</details>
+
+---
+
+### Q15. List employees along with their manager's name.
+
+<details>
+<summary>💡 Hint</summary>
+Use SELF JOIN on employees table.
+</details>
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT
+    e.name   AS employee,
+    e.salary AS emp_salary,
+    COALESCE(m.name, 'No Manager') AS manager
+FROM employees e
+LEFT JOIN employees m ON e.manager_id = m.emp_id
+ORDER BY manager;
+```
+</details>
+
+---
+
+### Q16. Find all employees who earn more than the average salary of their department.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+-- Using correlated subquery
+SELECT e.name, e.salary, d.dept_name
+FROM employees e
+JOIN departments d ON e.dept_id = d.dept_id
+WHERE e.salary > (
+    SELECT AVG(salary) FROM employees
+    WHERE dept_id = e.dept_id
+);
+
+-- Using window function (cleaner)
+SELECT name, dept_name, salary FROM (
+    SELECT e.name, d.dept_name, e.salary,
+        AVG(e.salary) OVER (PARTITION BY e.dept_id) AS dept_avg
+    FROM employees e
+    JOIN departments d ON e.dept_id = d.dept_id
+) t
+WHERE salary > dept_avg;
+```
+</details>
+
+---
+
+### Q17. Find duplicate salary values in the employees table.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT salary, COUNT(*) AS occurrences
+FROM employees
+GROUP BY salary
+HAVING COUNT(*) > 1
+ORDER BY salary DESC;
+```
+</details>
+
+---
+
+### Q18. Find employees who have NOT placed any orders.
+
+<details>
+<summary>💡 Hint</summary>
+Use LEFT JOIN + IS NULL, or NOT IN / NOT EXISTS.
+</details>
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+-- Method 1: LEFT JOIN
+SELECT e.emp_id, e.name, e.dept_id
+FROM employees e
+LEFT JOIN orders o ON e.emp_id = o.emp_id
+WHERE o.order_id IS NULL;
+
+-- Method 2: NOT EXISTS
+SELECT emp_id, name FROM employees e
+WHERE NOT EXISTS (
+    SELECT 1 FROM orders o WHERE o.emp_id = e.emp_id
+);
+```
+</details>
+
+---
+
+### Q19. Rank employees by salary within each department.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT
+    e.name,
+    d.dept_name,
+    e.salary,
+    RANK()       OVER (PARTITION BY e.dept_id ORDER BY e.salary DESC) AS rank_in_dept,
+    DENSE_RANK() OVER (PARTITION BY e.dept_id ORDER BY e.salary DESC) AS dense_rank_in_dept
+FROM employees e
+JOIN departments d ON e.dept_id = d.dept_id
+ORDER BY d.dept_name, rank_in_dept;
+```
+</details>
+
+---
+
+### Q20. Get the top 1 highest-paid employee in each department.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT name, dept_name, salary FROM (
+    SELECT e.name, d.dept_name, e.salary,
+        ROW_NUMBER() OVER (PARTITION BY e.dept_id ORDER BY e.salary DESC) AS rn
+    FROM employees e
+    JOIN departments d ON e.dept_id = d.dept_id
+) t
+WHERE rn = 1;
+```
+</details>
+
+---
+
+### Q21. Calculate the running total of sales by date.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT
+    sale_date,
+    emp_id,
+    sale_amount,
+    SUM(sale_amount) OVER (ORDER BY sale_date) AS running_total,
+    SUM(sale_amount) OVER (
+        PARTITION BY emp_id ORDER BY sale_date
+    ) AS running_total_per_emp
+FROM sales
+ORDER BY sale_date;
+```
+</details>
+
+---
+
+### Q22. Find the month-wise total sales amount.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT
+    YEAR(sale_date)  AS year,
+    MONTH(sale_date) AS month,
+    SUM(sale_amount) AS total_sales,
+    COUNT(*)         AS num_transactions
+FROM sales
+GROUP BY YEAR(sale_date), MONTH(sale_date)
+ORDER BY year, month;
+```
+</details>
+
+---
+
+### Q23. Find products that have never been ordered.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT p.product_id, p.product_name, p.category
+FROM products p
+LEFT JOIN orders o ON p.product_id = o.product_id
+WHERE o.order_id IS NULL;
+```
+</details>
+
+---
+
+### Q24. Get each employee's salary compared to the previous employee (by join date).
+
+<details>
+<summary>💡 Hint</summary>
+Use LAG window function.
+</details>
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT
+    name,
+    join_date,
+    salary,
+    LAG(salary) OVER (ORDER BY join_date) AS prev_emp_salary,
+    salary - LAG(salary) OVER (ORDER BY join_date) AS salary_diff
+FROM employees
+ORDER BY join_date;
+```
+</details>
+
+---
+
+### Q25. Find employees whose salary is in the top 25% of the company.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT name, salary FROM (
+    SELECT name, salary,
+        NTILE(4) OVER (ORDER BY salary DESC) AS quartile
+    FROM employees
+) t
+WHERE quartile = 1
+ORDER BY salary DESC;
+```
+</details>
+
+---
+
+### Q26. Find the cumulative percentage of total sales per employee.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT
+    emp_id,
+    SUM(sale_amount) AS total_sales,
+    ROUND(
+        100.0 * SUM(sale_amount) / SUM(SUM(sale_amount)) OVER (),
+        2
+    ) AS pct_of_total
+FROM sales
+GROUP BY emp_id
+ORDER BY total_sales DESC;
+```
+</details>
+
+---
+
+## 🔴 HARD (Q27 – Q35)
+
+---
+
+### Q27. Write a query to get the Nth highest salary (e.g., 3rd highest).
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+-- Set N = 3 (change as needed)
+SELECT DISTINCT salary FROM (
+    SELECT salary,
+        DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
+    FROM employees
+) t
+WHERE rnk = 3;
+
+-- General form using variable (MySQL)
+SET @N = 3;
+SELECT salary FROM (
+    SELECT DISTINCT salary,
+        DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
+    FROM employees
+) t
+WHERE rnk = @N;
+```
+</details>
+
+---
+
+### Q28. Find employees who joined in the same month and year as another employee.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT
+    e1.name AS employee,
+    e2.name AS joined_same_month_as,
+    e1.join_date
+FROM employees e1
+JOIN employees e2
+    ON  YEAR(e1.join_date)  = YEAR(e2.join_date)
+    AND MONTH(e1.join_date) = MONTH(e2.join_date)
+    AND e1.emp_id < e2.emp_id
+ORDER BY e1.join_date;
+```
+</details>
+
+---
+
+### Q29. Get the department with the highest total salary bill.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+-- Single department (top 1)
+SELECT d.dept_name, SUM(e.salary) AS total_salary_bill
+FROM employees e
+JOIN departments d ON e.dept_id = d.dept_id
+GROUP BY d.dept_name
+ORDER BY total_salary_bill DESC
+LIMIT 1;
+
+-- Using CTE with RANK
+WITH dept_totals AS (
+    SELECT d.dept_name, SUM(e.salary) AS total_salary_bill,
+        RANK() OVER (ORDER BY SUM(e.salary) DESC) AS rnk
+    FROM employees e
+    JOIN departments d ON e.dept_id = d.dept_id
+    GROUP BY d.dept_name
+)
+SELECT dept_name, total_salary_bill FROM dept_totals WHERE rnk = 1;
+```
+</details>
+
+---
+
+### Q30. Find employees whose salary is above average AND who have placed at least one order.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT DISTINCT e.name, e.salary
+FROM employees e
+JOIN orders o ON e.emp_id = o.emp_id
+WHERE e.salary > (SELECT AVG(salary) FROM employees)
+ORDER BY e.salary DESC;
+```
+</details>
+
+---
+
+### Q31. Create a report: for each department show total employees, avg salary, min salary, max salary.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT
+    d.dept_name,
+    d.location,
+    COUNT(e.emp_id)       AS total_employees,
+    ROUND(AVG(e.salary), 2) AS avg_salary,
+    MIN(e.salary)         AS min_salary,
+    MAX(e.salary)         AS max_salary,
+    SUM(e.salary)         AS total_payroll
+FROM departments d
+LEFT JOIN employees e ON d.dept_id = e.dept_id
+GROUP BY d.dept_name, d.location
+ORDER BY total_payroll DESC;
+```
+</details>
+
+---
+
+### Q32. Find the employee with the most orders placed.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+-- Using subquery
+SELECT e.name, COUNT(o.order_id) AS order_count
+FROM employees e
+JOIN orders o ON e.emp_id = o.emp_id
+GROUP BY e.emp_id, e.name
+ORDER BY order_count DESC
+LIMIT 1;
+
+-- Using CTE (handles ties)
+WITH order_counts AS (
+    SELECT emp_id, COUNT(*) AS order_count,
+        RANK() OVER (ORDER BY COUNT(*) DESC) AS rnk
+    FROM orders
+    GROUP BY emp_id
+)
+SELECT e.name, oc.order_count
+FROM order_counts oc
+JOIN employees e ON oc.emp_id = e.emp_id
+WHERE rnk = 1;
+```
+</details>
+
+---
+
+### Q33. Pivot: Show total sales amount per employee per region (rows = employees, columns = regions).
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT
+    e.name,
+    SUM(CASE WHEN s.region = 'North' THEN s.sale_amount ELSE 0 END) AS North,
+    SUM(CASE WHEN s.region = 'South' THEN s.sale_amount ELSE 0 END) AS South,
+    SUM(CASE WHEN s.region = 'East'  THEN s.sale_amount ELSE 0 END) AS East,
+    SUM(CASE WHEN s.region = 'West'  THEN s.sale_amount ELSE 0 END) AS West,
+    SUM(s.sale_amount) AS Total
+FROM sales s
+JOIN employees e ON s.emp_id = e.emp_id
+GROUP BY e.emp_id, e.name
+ORDER BY Total DESC;
+```
+</details>
+
+---
+
+### Q34. For each employee in Sales dept, show their sales growth month over month.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+WITH monthly_sales AS (
+    SELECT
+        emp_id,
+        DATE_FORMAT(sale_date, '%Y-%m') AS yr_month,
+        SUM(sale_amount) AS monthly_total
+    FROM sales
+    GROUP BY emp_id, DATE_FORMAT(sale_date, '%Y-%m')
+),
+sales_with_prev AS (
+    SELECT
+        emp_id,
+        yr_month,
+        monthly_total,
+        LAG(monthly_total) OVER (PARTITION BY emp_id ORDER BY yr_month) AS prev_month
+    FROM monthly_sales
+)
+SELECT
+    e.name,
+    s.yr_month,
+    s.monthly_total,
+    s.prev_month,
+    ROUND(
+        CASE
+            WHEN prev_month IS NULL OR prev_month = 0 THEN NULL
+            ELSE 100.0 * (monthly_total - prev_month) / prev_month
+        END, 2
+    ) AS growth_pct
+FROM sales_with_prev s
+JOIN employees e ON s.emp_id = e.emp_id
+ORDER BY e.name, s.yr_month;
+```
+</details>
+
+---
+
+### Q35. Find all pairs of employees in the same department who have the same salary.
+
+<details>
+<summary>✅ Solution</summary>
+
+```sql
+SELECT
+    e1.name  AS employee_1,
+    e2.name  AS employee_2,
+    d.dept_name,
+    e1.salary
+FROM employees e1
+JOIN employees e2
+    ON  e1.dept_id = e2.dept_id
+    AND e1.salary  = e2.salary
+    AND e1.emp_id  < e2.emp_id   -- avoid duplicates & self pairs
+JOIN departments d ON e1.dept_id = d.dept_id
+ORDER BY e1.salary DESC;
+```
+</details>
+
+---
+
+## 📊 Difficulty Summary
+
+| Level | Questions | Topics Covered |
+|-------|-----------|----------------|
+| 🟢 Easy | Q1 – Q12 | SELECT, WHERE, JOIN, GROUP BY, ORDER BY, LIKE, NULL |
+| 🟡 Medium | Q13 – Q26 | HAVING, Subqueries, SELF JOIN, Window Functions, LAG/LEAD |
+| 🔴 Hard | Q27 – Q35 | CTEs, PIVOT, Recursive patterns, Complex aggregations |
+
+---
+
+## 💡 Key Concepts Used
+
+| Concept | Questions |
+|---------|-----------|
+| INNER / LEFT JOIN | Q1, Q7, Q15, Q18, Q23 |
+| GROUP BY + HAVING | Q3, Q10, Q13, Q17 |
+| Subqueries | Q14, Q16, Q18, Q30 |
+| SELF JOIN | Q15, Q28, Q35 |
+| Window Functions | Q19, Q20, Q21, Q24, Q25, Q27 |
+| CTE (WITH clause) | Q16, Q29, Q32, Q34 |
+| LAG / LEAD | Q24, Q34 |
+| CASE / PIVOT | Q33 |
+| NOT IN / NOT EXISTS | Q18, Q23 |
+| Date Functions | Q9, Q22, Q28, Q34 |
+
+---
+
+## 🧠 Practice Tips
+
+1. **Always read the question twice** before writing SQL
+2. **Sketch the expected output** — know what rows/columns you want
+3. **Build the query step by step** — start with FROM + JOIN, then WHERE, then GROUP BY
+4. **Test with LIMIT 5** first to preview data before running full query
+5. **Window functions** are the most tested in senior interviews — master them!
+6. **CTEs > Nested subqueries** for readability — practice rewriting subqueries as CTEs
+7. **Execution order to remember:**
+   ```
+   FROM → JOIN → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT
+   ```
+
+---
+
+*Happy Practicing! 🚀 Keep solving daily and you'll crack any SQL interview.*
