@@ -1322,3 +1322,795 @@ FROM Employees;
 ```sql
 -- INNER JOIN
 SEL
+# 🗄️ SQL Interview Questions & Answers (Top 40)
+
+> Frequently asked SQL questions covering Basics, Joins, Aggregations, Subqueries, Indexes, Stored Procedures, and more.
+
+---
+
+## 📋 Table of Contents
+
+1. [SQL Basics](#1-sql-basics)
+2. [Joins](#2-joins)
+3. [Aggregation & Grouping](#3-aggregation--grouping)
+4. [Subqueries & CTEs](#4-subqueries--ctes)
+5. [Constraints & Keys](#5-constraints--keys)
+6. [Indexes & Performance](#6-indexes--performance)
+7. [Stored Procedures, Functions & Triggers](#7-stored-procedures-functions--triggers)
+8. [Advanced SQL](#8-advanced-sql)
+9. [Practical Coding Questions](#9-practical-coding-questions)
+
+---
+
+## 1. SQL Basics
+
+### Q1. What is SQL? What are its sublanguages?
+
+**SQL (Structured Query Language)** is used to communicate with relational databases.
+
+| Sublanguage | Full Form | Commands |
+|-------------|-----------|----------|
+| **DDL** | Data Definition Language | `CREATE`, `ALTER`, `DROP`, `TRUNCATE` |
+| **DML** | Data Manipulation Language | `SELECT`, `INSERT`, `UPDATE`, `DELETE` |
+| **DCL** | Data Control Language | `GRANT`, `REVOKE` |
+| **TCL** | Transaction Control Language | `COMMIT`, `ROLLBACK`, `SAVEPOINT` |
+
+---
+
+### Q2. What is the difference between `DELETE`, `TRUNCATE`, and `DROP`?
+
+| Feature | DELETE | TRUNCATE | DROP |
+|---------|--------|----------|------|
+| Removes | Specific rows | All rows | Entire table |
+| WHERE clause | ✅ Yes | ❌ No | ❌ No |
+| Rollback | ✅ Possible | ❌ Not possible | ❌ Not possible |
+| Triggers fired | ✅ Yes | ❌ No | ❌ No |
+| Auto-increment reset | ❌ No | ✅ Yes | — |
+| DDL or DML | DML | DDL | DDL |
+
+```sql
+DELETE FROM employees WHERE id = 5;   -- deletes one row
+TRUNCATE TABLE employees;             -- removes all rows fast
+DROP TABLE employees;                 -- removes table entirely
+```
+
+---
+
+### Q3. What is the difference between `WHERE` and `HAVING`?
+
+| Feature | WHERE | HAVING |
+|---------|-------|--------|
+| Used with | Any query | `GROUP BY` |
+| Filters | Rows (before grouping) | Groups (after grouping) |
+| Aggregate functions | ❌ No | ✅ Yes |
+
+```sql
+-- WHERE filters rows before grouping
+SELECT department, COUNT(*) 
+FROM employees
+WHERE salary > 30000
+GROUP BY department;
+
+-- HAVING filters groups after aggregation
+SELECT department, COUNT(*) AS emp_count
+FROM employees
+GROUP BY department
+HAVING COUNT(*) > 5;
+```
+
+---
+
+### Q4. What is the difference between `UNION` and `UNION ALL`?
+
+| Feature | UNION | UNION ALL |
+|---------|-------|-----------|
+| Duplicates | Removed | Kept |
+| Performance | Slower (removes duplicates) | Faster |
+| Use when | Unique results needed | All results including duplicates |
+
+```sql
+SELECT city FROM customers
+UNION
+SELECT city FROM suppliers;      -- unique cities only
+
+SELECT city FROM customers
+UNION ALL
+SELECT city FROM suppliers;      -- all cities including duplicates
+```
+
+---
+
+### Q5. What is a NULL value? How to handle it?
+
+`NULL` means **unknown/missing** — not zero, not empty string.
+
+```sql
+-- Check for NULL
+SELECT * FROM employees WHERE manager_id IS NULL;
+SELECT * FROM employees WHERE manager_id IS NOT NULL;
+
+-- COALESCE: returns first non-null value
+SELECT name, COALESCE(phone, email, 'No Contact') AS contact
+FROM employees;
+
+-- IFNULL (MySQL) / ISNULL (SQL Server)
+SELECT IFNULL(bonus, 0) FROM employees;
+
+-- NULLIF: returns NULL if two values are equal
+SELECT NULLIF(score, 0) FROM results; -- returns NULL if score = 0
+```
+
+---
+
+### Q6. What are the different types of SQL constraints?
+
+| Constraint | Purpose |
+|------------|---------|
+| `PRIMARY KEY` | Uniquely identifies each row; NOT NULL + UNIQUE |
+| `FOREIGN KEY` | Links to PRIMARY KEY in another table |
+| `UNIQUE` | All values in column must be different |
+| `NOT NULL` | Column cannot have NULL values |
+| `CHECK` | Values must satisfy a condition |
+| `DEFAULT` | Assigns a default value when none is provided |
+
+```sql
+CREATE TABLE employees (
+    id        INT PRIMARY KEY,
+    name      VARCHAR(100) NOT NULL,
+    email     VARCHAR(100) UNIQUE,
+    age       INT CHECK (age >= 18),
+    dept_id   INT,
+    salary    DECIMAL DEFAULT 30000,
+    FOREIGN KEY (dept_id) REFERENCES departments(id)
+);
+```
+
+---
+
+### Q7. What is normalization? Explain 1NF, 2NF, 3NF.
+
+**Normalization** is the process of organizing database tables to reduce redundancy and improve data integrity.
+
+| Form | Rule |
+|------|------|
+| **1NF** | Atomic values (no repeating groups or arrays) |
+| **2NF** | 1NF + No partial dependency (non-key column depends on full PK) |
+| **3NF** | 2NF + No transitive dependency (non-key column depends only on PK) |
+
+---
+
+### Q8. What is a VIEW?
+
+A **virtual table** based on a SELECT query. Does not store data physically.
+
+```sql
+-- Create a view
+CREATE VIEW high_salary_employees AS
+SELECT name, department, salary
+FROM employees
+WHERE salary > 80000;
+
+-- Use the view
+SELECT * FROM high_salary_employees;
+
+-- Drop the view
+DROP VIEW high_salary_employees;
+```
+
+**Benefits:** Simplifies complex queries, provides security by hiding sensitive columns, reusable.
+
+---
+
+## 2. Joins
+
+### Q9. What are the types of JOINs?
+
+```
+INNER JOIN   → Only matching rows in both tables
+LEFT JOIN    → All rows from left + matching from right (NULLs where no match)
+RIGHT JOIN   → All rows from right + matching from left
+FULL JOIN    → All rows from both tables (NULLs where no match)
+CROSS JOIN   → Cartesian product (every combination)
+SELF JOIN    → Table joined with itself
+```
+
+---
+
+### Q10. Explain each JOIN with an example.
+
+**Sample Tables:**
+```
+employees: id, name, dept_id
+departments: id, dept_name
+```
+
+```sql
+-- INNER JOIN: employees with a matching department
+SELECT e.name, d.dept_name
+FROM employees e
+INNER JOIN departments d ON e.dept_id = d.id;
+
+-- LEFT JOIN: all employees, even those without a department
+SELECT e.name, d.dept_name
+FROM employees e
+LEFT JOIN departments d ON e.dept_id = d.id;
+
+-- RIGHT JOIN: all departments, even if no employees
+SELECT e.name, d.dept_name
+FROM employees e
+RIGHT JOIN departments d ON e.dept_id = d.id;
+
+-- FULL OUTER JOIN: all employees and all departments
+SELECT e.name, d.dept_name
+FROM employees e
+FULL OUTER JOIN departments d ON e.dept_id = d.id;
+
+-- SELF JOIN: find employees and their managers
+SELECT e.name AS employee, m.name AS manager
+FROM employees e
+LEFT JOIN employees m ON e.manager_id = m.id;
+```
+
+---
+
+### Q11. What is the difference between `ON` and `USING` in a JOIN?
+
+```sql
+-- ON: flexible, used when column names differ
+SELECT * FROM employees e
+JOIN departments d ON e.dept_id = d.id;
+
+-- USING: shorthand when column name is same in both tables
+SELECT * FROM employees
+JOIN departments USING (dept_id);
+```
+
+---
+
+## 3. Aggregation & Grouping
+
+### Q12. What are aggregate functions?
+
+| Function | Description |
+|----------|-------------|
+| `COUNT()` | Number of rows |
+| `SUM()` | Total of values |
+| `AVG()` | Average value |
+| `MIN()` | Minimum value |
+| `MAX()` | Maximum value |
+
+```sql
+SELECT
+    COUNT(*) AS total_employees,
+    AVG(salary) AS avg_salary,
+    MAX(salary) AS highest_salary,
+    MIN(salary) AS lowest_salary,
+    SUM(salary) AS total_payroll
+FROM employees;
+```
+
+---
+
+### Q13. What does `GROUP BY` do?
+
+Groups rows with the same value in specified columns so aggregate functions can be applied per group.
+
+```sql
+-- Salary stats per department
+SELECT department, COUNT(*) AS headcount, AVG(salary) AS avg_salary
+FROM employees
+GROUP BY department
+ORDER BY avg_salary DESC;
+```
+
+**Rule:** Every column in SELECT (that's not an aggregate) **must** appear in GROUP BY.
+
+---
+
+### Q14. What are Window Functions?
+
+Perform calculations **across a set of rows related to the current row**, without collapsing them.
+
+```sql
+-- ROW_NUMBER: unique rank per partition
+SELECT name, department, salary,
+    ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) AS rn
+FROM employees;
+
+-- RANK vs DENSE_RANK
+-- RANK: 1,1,3 (skips 2)   DENSE_RANK: 1,1,2 (no skip)
+SELECT name, salary,
+    RANK() OVER (ORDER BY salary DESC) AS rnk,
+    DENSE_RANK() OVER (ORDER BY salary DESC) AS dense_rnk
+FROM employees;
+
+-- LAG / LEAD: access previous/next row value
+SELECT name, salary,
+    LAG(salary) OVER (ORDER BY id) AS prev_salary,
+    LEAD(salary) OVER (ORDER BY id) AS next_salary
+FROM employees;
+
+-- Running total
+SELECT name, salary,
+    SUM(salary) OVER (ORDER BY id) AS running_total
+FROM employees;
+```
+
+---
+
+## 4. Subqueries & CTEs
+
+### Q15. What is a subquery?
+
+A query **nested inside** another query.
+
+```sql
+-- Scalar subquery (returns one value)
+SELECT name, salary
+FROM employees
+WHERE salary > (SELECT AVG(salary) FROM employees);
+
+-- IN subquery (returns a list)
+SELECT name FROM employees
+WHERE dept_id IN (SELECT id FROM departments WHERE location = 'New York');
+
+-- EXISTS subquery (checks existence)
+SELECT name FROM employees e
+WHERE EXISTS (
+    SELECT 1 FROM orders o WHERE o.emp_id = e.id
+);
+
+-- Correlated subquery (references outer query)
+SELECT name, salary FROM employees e1
+WHERE salary = (
+    SELECT MAX(salary) FROM employees e2
+    WHERE e1.dept_id = e2.dept_id
+);
+```
+
+---
+
+### Q16. What is a CTE (Common Table Expression)?
+
+A **named temporary result set** defined using `WITH`, valid for a single query.
+
+```sql
+-- Simple CTE
+WITH dept_avg AS (
+    SELECT dept_id, AVG(salary) AS avg_sal
+    FROM employees
+    GROUP BY dept_id
+)
+SELECT e.name, e.salary, da.avg_sal
+FROM employees e
+JOIN dept_avg da ON e.dept_id = da.dept_id
+WHERE e.salary > da.avg_sal;
+
+-- Recursive CTE: employee hierarchy
+WITH RECURSIVE emp_hierarchy AS (
+    SELECT id, name, manager_id, 1 AS level
+    FROM employees WHERE manager_id IS NULL  -- root (CEO)
+    UNION ALL
+    SELECT e.id, e.name, e.manager_id, eh.level + 1
+    FROM employees e
+    JOIN emp_hierarchy eh ON e.manager_id = eh.id
+)
+SELECT * FROM emp_hierarchy ORDER BY level;
+```
+
+---
+
+### Q17. What is the difference between a subquery and a CTE?
+
+| Feature | Subquery | CTE |
+|---------|----------|-----|
+| Readability | Can be complex | More readable |
+| Reuse in same query | ❌ No | ✅ Yes (reference multiple times) |
+| Recursion | ❌ No | ✅ Yes |
+| Performance | Similar | Similar (optimizer treats equally) |
+
+---
+
+## 5. Constraints & Keys
+
+### Q18. What is the difference between Primary Key and Unique Key?
+
+| Feature | Primary Key | Unique Key |
+|---------|-------------|------------|
+| NULL allowed | ❌ No | ✅ One NULL allowed |
+| Per table | Only one | Multiple allowed |
+| Index created | Clustered | Non-clustered |
+| Purpose | Row identity | Enforce uniqueness |
+
+---
+
+### Q19. What is a Foreign Key? What is referential integrity?
+
+A **Foreign Key** is a column that references the Primary Key of another table.
+
+**Referential integrity** ensures a FK value must exist in the referenced table or be NULL.
+
+```sql
+CREATE TABLE orders (
+    order_id   INT PRIMARY KEY,
+    customer_id INT,
+    FOREIGN KEY (customer_id) REFERENCES customers(id)
+        ON DELETE CASCADE      -- delete orders when customer deleted
+        ON UPDATE CASCADE      -- update FK when PK updated
+);
+```
+
+**ON DELETE options:** `CASCADE`, `SET NULL`, `RESTRICT`, `NO ACTION`
+
+---
+
+### Q20. What is a composite key?
+
+A **primary key made of two or more columns** together.
+
+```sql
+CREATE TABLE order_items (
+    order_id   INT,
+    product_id INT,
+    quantity   INT,
+    PRIMARY KEY (order_id, product_id)  -- composite key
+);
+```
+
+---
+
+## 6. Indexes & Performance
+
+### Q21. What is an Index? Why use it?
+
+An index is a **data structure** (B-Tree by default) that speeds up data retrieval.
+
+```sql
+-- Create index
+CREATE INDEX idx_emp_name ON employees(name);
+
+-- Create unique index
+CREATE UNIQUE INDEX idx_emp_email ON employees(email);
+
+-- Composite index
+CREATE INDEX idx_dept_sal ON employees(department, salary);
+
+-- Drop index
+DROP INDEX idx_emp_name ON employees;
+```
+
+**Trade-offs:**
+- ✅ Faster SELECT queries
+- ❌ Slower INSERT/UPDATE/DELETE (index must update too)
+- ❌ Extra storage space
+
+---
+
+### Q22. What is the difference between Clustered and Non-Clustered Index?
+
+| Feature | Clustered | Non-Clustered |
+|---------|-----------|---------------|
+| Data storage | Sorted physically by index | Separate index structure |
+| Per table | Only **one** | Multiple allowed |
+| Speed | Faster for range queries | Faster for exact lookups |
+| Auto-created for | PRIMARY KEY | UNIQUE constraint |
+
+---
+
+### Q23. What is query optimization? What is EXPLAIN?
+
+`EXPLAIN` shows how the query engine executes a query — helps identify slow operations.
+
+```sql
+EXPLAIN SELECT * FROM employees WHERE department = 'Engineering';
+-- Look for: type=ALL (full scan = slow), type=ref (index used = fast)
+```
+
+**Common optimizations:**
+- Add indexes on WHERE, JOIN, ORDER BY columns
+- Avoid `SELECT *` — select only needed columns
+- Avoid functions on indexed columns in WHERE: `WHERE YEAR(created_at) = 2024` (bad) → `WHERE created_at BETWEEN '2024-01-01' AND '2024-12-31'` (good)
+- Use `LIMIT` for large result sets
+- Avoid `DISTINCT` unless necessary
+
+---
+
+## 7. Stored Procedures, Functions & Triggers
+
+### Q24. What is a Stored Procedure?
+
+A **precompiled SQL block** stored in the database, executed by calling its name.
+
+```sql
+-- Create stored procedure
+DELIMITER //
+CREATE PROCEDURE GetEmployeesByDept(IN dept_name VARCHAR(50))
+BEGIN
+    SELECT name, salary
+    FROM employees
+    WHERE department = dept_name
+    ORDER BY salary DESC;
+END //
+DELIMITER ;
+
+-- Call it
+CALL GetEmployeesByDept('Engineering');
+```
+
+**Benefits:** Reusability, security (no raw SQL exposure), performance (precompiled).
+
+---
+
+### Q25. What is the difference between Stored Procedure and Function?
+
+| Feature | Stored Procedure | Function |
+|---------|-----------------|----------|
+| Returns value | Optional (OUT params) | Must return a value |
+| Called with | `CALL` | Used in SQL expressions |
+| DML inside | ✅ Yes | Limited (depends on DB) |
+| Transactions | ✅ Yes | Limited |
+| Use case | Business logic | Calculations, transformations |
+
+```sql
+-- Function example
+CREATE FUNCTION GetFullName(first VARCHAR(50), last VARCHAR(50))
+RETURNS VARCHAR(100)
+DETERMINISTIC
+BEGIN
+    RETURN CONCAT(first, ' ', last);
+END;
+
+-- Use in query
+SELECT GetFullName(first_name, last_name) AS full_name FROM employees;
+```
+
+---
+
+### Q26. What is a Trigger?
+
+A **block of SQL that automatically executes** in response to INSERT, UPDATE, or DELETE.
+
+```sql
+CREATE TRIGGER before_employee_insert
+BEFORE INSERT ON employees
+FOR EACH ROW
+BEGIN
+    IF NEW.salary < 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Salary cannot be negative';
+    END IF;
+END;
+
+-- Audit trigger: log changes
+CREATE TRIGGER after_salary_update
+AFTER UPDATE ON employees
+FOR EACH ROW
+BEGIN
+    INSERT INTO salary_audit(emp_id, old_salary, new_salary, changed_at)
+    VALUES (OLD.id, OLD.salary, NEW.salary, NOW());
+END;
+```
+
+---
+
+## 8. Advanced SQL
+
+### Q27. What are Transactions? What are ACID properties?
+
+A **transaction** is a sequence of SQL operations treated as one unit.
+
+| Property | Meaning |
+|----------|---------|
+| **A**tomicity | All or nothing — if one step fails, whole transaction rolls back |
+| **C**onsistency | Database moves from one valid state to another |
+| **I**solation | Concurrent transactions don't interfere with each other |
+| **D**urability | Committed changes survive crashes |
+
+```sql
+BEGIN TRANSACTION;
+    UPDATE accounts SET balance = balance - 1000 WHERE id = 1;
+    UPDATE accounts SET balance = balance + 1000 WHERE id = 2;
+COMMIT;
+
+-- If something goes wrong
+ROLLBACK;
+
+-- Partial rollback
+SAVEPOINT sp1;
+UPDATE ...;
+ROLLBACK TO sp1;
+```
+
+---
+
+### Q28. What are Transaction Isolation Levels?
+
+| Level | Dirty Read | Non-Repeatable Read | Phantom Read |
+|-------|:----------:|:-------------------:|:------------:|
+| READ UNCOMMITTED | ✅ Possible | ✅ Possible | ✅ Possible |
+| READ COMMITTED | ❌ | ✅ Possible | ✅ Possible |
+| REPEATABLE READ | ❌ | ❌ | ✅ Possible |
+| SERIALIZABLE | ❌ | ❌ | ❌ |
+
+- **Higher isolation = more consistency but less concurrency**
+- Default in MySQL: `REPEATABLE READ`
+- Default in PostgreSQL: `READ COMMITTED`
+
+---
+
+### Q29. What is the difference between OLTP and OLAP?
+
+| Feature | OLTP | OLAP |
+|---------|------|------|
+| Purpose | Day-to-day transactions | Analytics & reporting |
+| Operations | INSERT, UPDATE, DELETE | SELECT (complex queries) |
+| Data size | Small per transaction | Large datasets |
+| Speed | Fast (milliseconds) | Slower (seconds/minutes) |
+| Normalization | Highly normalized | De-normalized (star schema) |
+| Example | Banking system | Data Warehouse |
+
+---
+
+### Q30. What is `CASE` expression?
+
+Like an if-else inside SQL.
+
+```sql
+-- Simple CASE
+SELECT name, salary,
+    CASE
+        WHEN salary >= 100000 THEN 'High'
+        WHEN salary >= 50000  THEN 'Medium'
+        ELSE 'Low'
+    END AS salary_band
+FROM employees;
+
+-- CASE in aggregation
+SELECT
+    SUM(CASE WHEN department = 'Engineering' THEN salary ELSE 0 END) AS eng_payroll,
+    SUM(CASE WHEN department = 'Sales' THEN salary ELSE 0 END) AS sales_payroll
+FROM employees;
+```
+
+---
+
+### Q31. What is `PIVOT`?
+
+Transforms rows into columns (rotating data).
+
+```sql
+-- MySQL approach using CASE
+SELECT
+    year,
+    SUM(CASE WHEN quarter = 'Q1' THEN revenue END) AS Q1,
+    SUM(CASE WHEN quarter = 'Q2' THEN revenue END) AS Q2,
+    SUM(CASE WHEN quarter = 'Q3' THEN revenue END) AS Q3,
+    SUM(CASE WHEN quarter = 'Q4' THEN revenue END) AS Q4
+FROM sales
+GROUP BY year;
+```
+
+---
+
+### Q32. What is the difference between `CHAR` and `VARCHAR`?
+
+| Feature | CHAR | VARCHAR |
+|---------|------|---------|
+| Length | Fixed | Variable |
+| Storage | Pads with spaces | Only uses actual length |
+| Speed | Slightly faster | Slightly slower |
+| Use when | Fixed-length data (codes, flags) | Variable-length data (names) |
+
+```sql
+CHAR(10)     -- always uses 10 bytes
+VARCHAR(10)  -- uses only as many bytes as needed (+ 1-2 overhead)
+```
+
+---
+
+## 9. Practical Coding Questions
+
+### Q33. Find the second highest salary
+
+```sql
+-- Using LIMIT/OFFSET
+SELECT DISTINCT salary
+FROM employees
+ORDER BY salary DESC
+LIMIT 1 OFFSET 1;
+
+-- Using subquery (works everywhere)
+SELECT MAX(salary) AS second_highest
+FROM employees
+WHERE salary < (SELECT MAX(salary) FROM employees);
+
+-- Using DENSE_RANK (returns NULL if doesn't exist)
+SELECT salary FROM (
+    SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
+    FROM employees
+) ranked
+WHERE rnk = 2;
+```
+
+---
+
+### Q34. Find duplicate records
+
+```sql
+-- Find emails that appear more than once
+SELECT email, COUNT(*) AS occurrences
+FROM employees
+GROUP BY email
+HAVING COUNT(*) > 1;
+
+-- Show all duplicate rows
+SELECT * FROM employees
+WHERE email IN (
+    SELECT email FROM employees
+    GROUP BY email HAVING COUNT(*) > 1
+);
+```
+
+---
+
+### Q35. Delete duplicate rows keeping one
+
+```sql
+-- Keep the row with the lowest id
+DELETE FROM employees
+WHERE id NOT IN (
+    SELECT MIN(id) FROM employees GROUP BY email
+);
+
+-- Using ROW_NUMBER (SQL Server / PostgreSQL)
+WITH ranked AS (
+    SELECT id, ROW_NUMBER() OVER (PARTITION BY email ORDER BY id) AS rn
+    FROM employees
+)
+DELETE FROM employees WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+```
+
+---
+
+### Q36. Find employees with salary greater than their department average
+
+```sql
+SELECT e.name, e.department, e.salary
+FROM employees e
+WHERE e.salary > (
+    SELECT AVG(salary) FROM employees
+    WHERE department = e.department
+);
+
+-- Using window function (more efficient)
+SELECT name, department, salary FROM (
+    SELECT name, department, salary,
+        AVG(salary) OVER (PARTITION BY department) AS dept_avg
+    FROM employees
+) t
+WHERE salary > dept_avg;
+```
+
+---
+
+### Q37. Find the Nth highest salary
+
+```sql
+-- Find Nth highest (e.g., 3rd)
+SELECT DISTINCT salary FROM employees
+ORDER BY salary DESC
+LIMIT 1 OFFSET N-1;  -- replace N with actual number e.g. OFFSET 2 for 3rd
+
+-- Dynamic using variable (MySQL)
+SET @N = 3;
+SELECT salary FROM (
+    SELECT DISTINCT salary,
+        DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
+    FROM employees
+) ranked
+WHERE rnk = @N;
+```
+
+---
+
+### Q38. G
